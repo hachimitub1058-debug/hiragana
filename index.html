@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>もじの れんしゅう</title>
+<style>
+  :root {
+    --bg: #fff7e6;
+    --card: #ffffff;
+    --accent: #ff8fab;
+    --accent2: #6fc3df;
+    --text: #4a3f35;
+    --gold: #ffd23f;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    overscroll-behavior: none;
+  }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+  header {
+    padding: 14px 12px 10px;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; color: var(--accent); }
+  main {
+    flex: 1;
+    padding: 8px 10px 24px;
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .hidden { display: none !important; }
+
+  /* --- home screen --- */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .gyou-block { margin-bottom: 16px; }
+  .gyou-label { font-size: 0.9rem; color: #a08c78; margin: 0 0 6px 4px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .char-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--card);
+    border: none;
+    border-radius: 14px;
+    font-size: 1.6rem;
+    color: var(--text);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .char-cell:active { transform: translateY(2px); box-shadow: none; }
+  .char-cell .stamp {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 1.1rem;
+  }
+  .char-cell.mastered {
+    background: #fff3d6;
+  }
+
+  /* --- read / write screens --- */
+  .practice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .back-btn {
+    border: none;
+    background: none;
+    font-size: 1rem;
+    color: #a08c78;
+    padding: 8px;
+  }
+  .step-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--accent2);
+  }
+
+  .char-display {
+    text-align: center;
+    font-size: 6rem;
+    line-height: 1;
+    margin: 10px 0 4px;
+    color: var(--text);
+  }
+  .speak-btn {
+    display: block;
+    margin: 0 auto 18px;
+    padding: 12px 26px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 30px;
+    background: var(--accent2);
+    color: #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+  }
+  .speak-btn:active { transform: translateY(2px); box-shadow: none; }
+
+  .quiz-prompt {
+    text-align: center;
+    margin: 6px 0 14px;
+    font-size: 1.1rem;
+  }
+  .quiz-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .quiz-choice {
+    padding: 18px 8px;
+    font-size: 2.6rem;
+    line-height: 1;
+    border: none;
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  .quiz-choice:active { transform: translateY(2px); box-shadow: none; }
+  .quiz-choice.correct { background: #b8e6b8; }
+  .quiz-choice.wrong { background: #f3b0b0; }
+  .quiz-feedback {
+    text-align: center;
+    min-height: 1.6em;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1 / 1;
+    margin: 8px auto 14px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    touch-action: none;
+  }
+  .canvas-wrap canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .write-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .write-buttons button {
+    padding: 10px 18px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  .progress-bar-wrap {
+    max-width: 320px;
+    margin: 0 auto 14px;
+    height: 12px;
+    background: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent2);
+    transition: width 0.15s ease-out;
+  }
+  .write-feedback {
+    text-align: center;
+    min-height: 1.6em;
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  /* --- celebrate overlay --- */
+  #celebrate-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .hanamaru {
+    font-size: 5rem;
+    animation: pop 0.5s ease-out;
+  }
+  .celebrate-text {
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: bold;
+    margin-top: 8px;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+    60% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  @keyframes shakeWrong {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .shake { animation: shakeWrong 0.3s; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>もじの れんしゅう</h1>
+</header>
+
+<main>
+
+  <!-- ホーム画面 -->
+  <section id="screen-home">
+    <div class="tabs">
+      <button class="tab-btn active" data-script="hiragana">ひらがな</button>
+      <button class="tab-btn" data-script="katakana">カタカナ</button>
+    </div>
+    <div id="home-grid"></div>
+  </section>
+
+  <!-- よむ画面 -->
+  <section id="screen-read" class="hidden">
+    <div class="practice-header">
+      <button class="back-btn" id="read-back-btn">← もどる</button>
+      <span class="step-label">① よむ</span>
+    </div>
+    <div class="char-display" id="read-char"></div>
+    <button class="speak-btn" id="speak-btn">🔊 きいてみる</button>
+    <div class="quiz-prompt">この もじで はじまる ものは どれ?</div>
+    <div class="quiz-choices" id="quiz-choices"></div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+  </section>
+
+  <!-- かく画面 -->
+  <section id="screen-write" class="hidden">
+    <div class="practice-header">
+      <button class="back-btn" id="write-back-btn">← もどる</button>
+      <span class="step-label">② かく</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="trace-progress"></div></div>
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="guide-canvas"></canvas>
+      <canvas id="draw-canvas"></canvas>
+    </div>
+    <div class="write-buttons">
+      <button id="clear-btn">🔄 やりなおす</button>
+    </div>
+    <div class="write-feedback" id="write-feedback"></div>
+  </section>
+
+</main>
+
+<div id="celebrate-overlay" class="hidden">
+  <div class="hanamaru">💮</div>
+  <div class="celebrate-text">よくできました!</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- データ ---------- */
+  var GYOU = [
+    { row: "あ", h: ["あ","い","う","え","お"], k: ["ア","イ","ウ","エ","オ"], r: ["a","i","u","e","o"] },
+    { row: "か", h: ["か","き","く","け","こ"], k: ["カ","キ","ク","ケ","コ"], r: ["ka","ki","ku","ke","ko"] },
+    { row: "さ", h: ["さ","し","す","せ","そ"], k: ["サ","シ","ス","セ","ソ"], r: ["sa","shi","su","se","so"] },
+    { row: "た", h: ["た","ち","つ","て","と"], k: ["タ","チ","ツ","テ","ト"], r: ["ta","chi","tsu","te","to"] },
+    { row: "な", h: ["な","に","ぬ","ね","の"], k: ["ナ","ニ","ヌ","ネ","ノ"], r: ["na","ni","nu","ne","no"] },
+    { row: "は", h: ["は","ひ","ふ","へ","ほ"], k: ["ハ","ヒ","フ","ヘ","ホ"], r: ["ha","hi","fu","he","ho"] },
+    { row: "ま", h: ["ま","み","む","め","も"], k: ["マ","ミ","ム","メ","モ"], r: ["ma","mi","mu","me","mo"] },
+    { row: "や", h: ["や","ゆ","よ"], k: ["ヤ","ユ","ヨ"], r: ["ya","yu","yo"] },
+    { row: "ら", h: ["ら","り","る","れ","ろ"], k: ["ラ","リ","ル","レ","ロ"], r: ["ra","ri","ru","re","ro"] },
+    { row: "わ", h: ["わ","を","ん"], k: ["ワ","ヲ","ン"], r: ["wa","wo","n"] }
+  ];
+
+  function buildList(script) {
+    var key = script === "hiragana" ? "h" : "k";
+    var list = [];
+    GYOU.forEach(function (g) {
+      g[key].forEach(function (ch, i) {
+        list.push({ char: ch, romaji: g.r[i], row: g.row, script: script });
+      });
+    });
+    return list;
+  }
+  var ALL = { hiragana: buildList("hiragana"), katakana: buildList("katakana") };
+
+  /* 読みの音ごとに、その音で始まる言葉の絵文字を対応させる(アルファベットが読めない年齢向け) */
+  var EMOJI_MAP = {
+    a: "🐜", i: "🐶", u: "🐰", e: "✏️", o: "🍙",
+    ka: "🦀", ki: "🦒", ku: "👟", ke: "🍰", ko: "🐨",
+    sa: "🐟", shi: "🦌", su: "🍉", se: "🦗", so: "🛷",
+    ta: "🐙", chi: "🦋", tsu: "🌙", te: "🧤", to: "⏰",
+    na: "🍆", ni: "🥕", nu: "🧸", ne: "🐱", no: "🚗",
+    ha: "🌸", hi: "✈️", fu: "🎈", he: "🐍", ho: "⭐",
+    ma: "🌲", mi: "🍊", mu: "🐛", me: "👓", mo: "🍑",
+    ya: "⛰️", yu: "❄️", yo: "⛵",
+    ra: "🦁", ri: "🍎", ru: "💎", re: "🍋", ro: "🕯️",
+    wa: "🐊", wo: "📖", n: "🍞"
+  };
+
+  /* ---------- 進捗保存 ---------- */
+  var STORAGE_KEY = "hiragana-app-progress-v1";
+  function loadProgress() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveProgress(p) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  }
+  var progress = loadProgress();
+
+  function progKey(script, ch) { return script + "-" + ch; }
+  function getEntry(script, ch) {
+    var k = progKey(script, ch);
+    if (!progress[k]) progress[k] = { quiz: false, trace: false };
+    return progress[k];
+  }
+  function isMastered(script, ch) {
+    var e = progress[progKey(script, ch)];
+    return !!(e && e.quiz && e.trace);
+  }
+
+  /* ---------- 画面切り替え ---------- */
+  var screenHome = document.getElementById("screen-home");
+  var screenRead = document.getElementById("screen-read");
+  var screenWrite = document.getElementById("screen-write");
+  function showScreen(el) {
+    [screenHome, screenRead, screenWrite].forEach(function (s) { s.classList.add("hidden"); });
+    el.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- ホーム画面 ---------- */
+  var currentScript = "hiragana";
+  var homeGrid = document.getElementById("home-grid");
+  var tabBtns = document.querySelectorAll(".tab-btn");
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      tabBtns.forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      currentScript = btn.getAttribute("data-script");
+      renderHome();
+    });
+  });
+
+  function renderHome() {
+    homeGrid.innerHTML = "";
+    GYOU.forEach(function (g) {
+      var block = document.createElement("div");
+      block.className = "gyou-block";
+
+      var label = document.createElement("div");
+      label.className = "gyou-label";
+      label.textContent = g.row + "行";
+      block.appendChild(label);
+
+      var grid = document.createElement("div");
+      grid.className = "grid";
+
+      var key = currentScript === "hiragana" ? "h" : "k";
+      g[key].forEach(function (ch, i) {
+        var cell = document.createElement("button");
+        cell.className = "char-cell";
+        cell.textContent = ch;
+        if (isMastered(currentScript, ch)) {
+          cell.classList.add("mastered");
+          var stamp = document.createElement("span");
+          stamp.className = "stamp";
+          stamp.textContent = "💮";
+          cell.appendChild(stamp);
+        }
+        cell.addEventListener("click", function () {
+          startPractice(currentScript, ch, g.r[i]);
+        });
+        grid.appendChild(cell);
+      });
+
+      block.appendChild(grid);
+      homeGrid.appendChild(block);
+    });
+  }
+
+  /* ---------- 練習フロー制御 ---------- */
+  var practiceState = { script: null, char: null, romaji: null };
+
+  function startPractice(script, ch, romaji) {
+    practiceState = { script: script, char: ch, romaji: romaji };
+    startReadStep();
+  }
+
+  document.getElementById("read-back-btn").addEventListener("click", function () {
+    renderHome();
+    showScreen(screenHome);
+  });
+  document.getElementById("write-back-btn").addEventListener("click", function () {
+    renderHome();
+    showScreen(screenHome);
+  });
+
+  /* ---------- よむステップ ---------- */
+  var readCharEl = document.getElementById("read-char");
+  var speakBtn = document.getElementById("speak-btn");
+  var quizChoicesEl = document.getElementById("quiz-choices");
+  var quizFeedbackEl = document.getElementById("quiz-feedback");
+
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function startReadStep() {
+    quizFeedbackEl.textContent = "";
+    readCharEl.textContent = practiceState.char;
+
+    var pool = ALL[practiceState.script].filter(function (item) {
+      return item.romaji !== practiceState.romaji;
+    });
+    var distractors = shuffle(pool).slice(0, 3).map(function (item) { return item.romaji; });
+    var choices = shuffle([practiceState.romaji].concat(distractors));
+
+    quizChoicesEl.innerHTML = "";
+    choices.forEach(function (romaji) {
+      var btn = document.createElement("button");
+      btn.className = "quiz-choice";
+      btn.textContent = EMOJI_MAP[romaji] || "❓";
+      btn.addEventListener("click", function () { onQuizAnswer(romaji, btn); });
+      quizChoicesEl.appendChild(btn);
+    });
+
+    showScreen(screenRead);
+    speak(practiceState.char);
+  }
+
+  speakBtn.addEventListener("click", function () { speak(practiceState.char); });
+
+  function onQuizAnswer(chosenRomaji, btnEl) {
+    var buttons = quizChoicesEl.querySelectorAll(".quiz-choice");
+    buttons.forEach(function (b) { b.disabled = true; });
+
+    if (chosenRomaji === practiceState.romaji) {
+      btnEl.classList.add("correct");
+      quizFeedbackEl.textContent = "せいかい!";
+      quizFeedbackEl.style.color = "#3fa34d";
+      var entry = getEntry(practiceState.script, practiceState.char);
+      entry.quiz = true;
+      saveProgress(progress);
+      setTimeout(startWriteStep, 700);
+    } else {
+      btnEl.classList.add("wrong");
+      quizFeedbackEl.textContent = "もういちど きいて かんがえてみよう";
+      quizFeedbackEl.style.color = "#c94f4f";
+      quizChoicesEl.classList.add("shake");
+      setTimeout(function () {
+        quizChoicesEl.classList.remove("shake");
+        buttons.forEach(function (b) {
+          b.disabled = false;
+          b.classList.remove("wrong");
+        });
+      }, 500);
+    }
+  }
+
+  /* ---------- かくステップ ---------- */
+  var canvasWrap = document.getElementById("canvas-wrap");
+  var guideCanvas = document.getElementById("guide-canvas");
+  var drawCanvas = document.getElementById("draw-canvas");
+  var traceProgressEl = document.getElementById("trace-progress");
+  var writeFeedbackEl = document.getElementById("write-feedback");
+  var clearBtn = document.getElementById("clear-btn");
+
+  var CANVAS_SIZE = 300;
+  var PASS_RATIO = 0.7;
+  var guideMask = null; // Uint8Array, 1 = guide pixel
+  var guidePixelCount = 0;
+  var drawing = false;
+  var tracePassed = false;
+
+  function setupCanvasSize() {
+    [guideCanvas, drawCanvas].forEach(function (c) {
+      c.width = CANVAS_SIZE;
+      c.height = CANVAS_SIZE;
+    });
+  }
+  setupCanvasSize();
+
+  function drawGuide(ch) {
+    var ctx = guideCanvas.getContext("2d");
+    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.fillStyle = "#d8d8d8";
+    ctx.font = "bold " + Math.round(CANVAS_SIZE * 0.72) + "px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ch, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + CANVAS_SIZE * 0.04);
+
+    var data = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+    guideMask = new Uint8Array(CANVAS_SIZE * CANVAS_SIZE);
+    guidePixelCount = 0;
+    for (var p = 0; p < CANVAS_SIZE * CANVAS_SIZE; p++) {
+      var alpha = data[p * 4 + 3];
+      if (alpha > 60) {
+        guideMask[p] = 1;
+        guidePixelCount++;
+      }
+    }
+  }
+
+  function clearDrawing() {
+    var ctx = drawCanvas.getContext("2d");
+    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    traceProgressEl.style.width = "0%";
+    writeFeedbackEl.textContent = "";
+    tracePassed = false;
+  }
+
+  function startWriteStep() {
+    drawGuide(practiceState.char);
+    clearDrawing();
+    showScreen(screenWrite);
+  }
+
+  function getCanvasPos(evt) {
+    var rect = drawCanvas.getBoundingClientRect();
+    var clientX = evt.clientX;
+    var clientY = evt.clientY;
+    var scaleX = CANVAS_SIZE / rect.width;
+    var scaleY = CANVAS_SIZE / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  var lastPos = null;
+  var drawCtx = drawCanvas.getContext("2d");
+  drawCtx.strokeStyle = "#5a8fd6";
+  drawCtx.lineWidth = Math.round(CANVAS_SIZE * 0.07);
+  drawCtx.lineCap = "round";
+  drawCtx.lineJoin = "round";
+
+  function pointerDown(evt) {
+    if (tracePassed) return;
+    drawing = true;
+    lastPos = getCanvasPos(evt);
+    drawCtx.beginPath();
+    drawCtx.moveTo(lastPos.x, lastPos.y);
+    drawCtx.lineTo(lastPos.x + 0.01, lastPos.y + 0.01);
+    drawCtx.stroke();
+  }
+  function pointerMove(evt) {
+    if (!drawing || tracePassed) return;
+    var pos = getCanvasPos(evt);
+    drawCtx.beginPath();
+    drawCtx.moveTo(lastPos.x, lastPos.y);
+    drawCtx.lineTo(pos.x, pos.y);
+    drawCtx.stroke();
+    lastPos = pos;
+  }
+  function pointerUp() {
+    if (!drawing) return;
+    drawing = false;
+    checkCoverage();
+  }
+
+  drawCanvas.addEventListener("pointerdown", function (evt) {
+    drawCanvas.setPointerCapture(evt.pointerId);
+    pointerDown(evt);
+  });
+  drawCanvas.addEventListener("pointermove", pointerMove);
+  drawCanvas.addEventListener("pointerup", pointerUp);
+  drawCanvas.addEventListener("pointercancel", pointerUp);
+
+  clearBtn.addEventListener("click", clearDrawing);
+
+  function checkCoverage() {
+    if (!guidePixelCount) return;
+    var data = drawCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+    var hit = 0;
+    for (var p = 0; p < CANVAS_SIZE * CANVAS_SIZE; p++) {
+      if (guideMask[p] && data[p * 4 + 3] > 60) hit++;
+    }
+    var ratio = hit / guidePixelCount;
+    var pct = Math.min(100, Math.round(ratio * 100));
+    traceProgressEl.style.width = pct + "%";
+
+    if (ratio >= PASS_RATIO && !tracePassed) {
+      tracePassed = true;
+      writeFeedbackEl.textContent = "じょうずに かけました!";
+      writeFeedbackEl.style.color = "#3fa34d";
+      var entry = getEntry(practiceState.script, practiceState.char);
+      entry.trace = true;
+      saveProgress(progress);
+      setTimeout(celebrate, 500);
+    } else {
+      writeFeedbackEl.textContent = "もう すこし なぞってみよう (" + pct + "%)";
+      writeFeedbackEl.style.color = "#a08c78";
+    }
+  }
+
+  /* ---------- 達成演出 ---------- */
+  var celebrateOverlay = document.getElementById("celebrate-overlay");
+  function celebrate() {
+    celebrateOverlay.classList.remove("hidden");
+    setTimeout(function () {
+      celebrateOverlay.classList.add("hidden");
+      renderHome();
+      showScreen(screenHome);
+    }, 1200);
+  }
+
+  /* ---------- 初期化 ---------- */
+  renderHome();
+  showScreen(screenHome);
+})();
+</script>
+
+</body>
+</html>
