@@ -157,6 +157,17 @@
     font-weight: bold;
     margin-top: 10px;
   }
+  .word-reveal {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-top: 4px;
+    color: var(--text);
+  }
+  .word-reveal .hl-char {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 
   .canvas-wrap {
     position: relative;
@@ -273,6 +284,7 @@
     <div class="quiz-prompt">この もじで はじまる ものは どれ?</div>
     <div class="quiz-choices" id="quiz-choices"></div>
     <div class="quiz-feedback" id="quiz-feedback"></div>
+    <div class="word-reveal hidden" id="word-reveal"></div>
   </section>
 
   <!-- かく画面 -->
@@ -343,6 +355,38 @@
     ra: "🦁", ri: "🍎", ru: "💎", re: "🍋", ro: "🕯️",
     wa: "🐊", wo: "📖", n: "🍞"
   };
+
+  /* 絵文字が表す言葉(ひらがな表記)。カタカナ表示時は自動変換する */
+  var WORD_MAP = {
+    a: "あり", i: "いぬ", u: "うさぎ", e: "えんぴつ", o: "おにぎり",
+    ka: "かに", ki: "きりん", ku: "くつ", ke: "けーき", ko: "こあら",
+    sa: "さかな", shi: "しか", su: "すいか", se: "せみ", so: "そり",
+    ta: "たこ", chi: "ちょうちょ", tsu: "つき", te: "てぶくろ", to: "とけい",
+    na: "なす", ni: "にんじん", nu: "ぬいぐるみ", ne: "ねこ", no: "のりもの",
+    ha: "はな", hi: "ひこうき", fu: "ふうせん", he: "へび", ho: "ほし",
+    ma: "まつ", mi: "みかん", mu: "むし", me: "めがね", mo: "もも",
+    ya: "やま", yu: "ゆき", yo: "よっと",
+    ra: "らいおん", ri: "りんご", ru: "るびー", re: "れもん", ro: "ろうそく",
+    wa: "わに", wo: "ほんを よむ", n: "ぱん"
+  };
+
+  function hiraganaToKatakana(str) {
+    return str.replace(/[ぁ-ゖ]/g, function (c) {
+      return String.fromCharCode(c.charCodeAt(0) + 0x60);
+    });
+  }
+
+  function getWordDisplay(romaji, script) {
+    var word = WORD_MAP[romaji];
+    if (!word) return "";
+    return script === "katakana" ? hiraganaToKatakana(word) : word;
+  }
+
+  function buildWordHtml(word, targetChar) {
+    var idx = word.indexOf(targetChar);
+    if (idx === -1) return word;
+    return word.slice(0, idx) + '<span class="hl-char">' + targetChar + "</span>" + word.slice(idx + targetChar.length);
+  }
 
   /*
    * 書き順ヒント: 文字ごとに、各画の書き始め位置を [x, y] (0〜1の相対座標) で並べたもの。
@@ -553,6 +597,7 @@
   var speakBtn = document.getElementById("speak-btn");
   var quizChoicesEl = document.getElementById("quiz-choices");
   var quizFeedbackEl = document.getElementById("quiz-feedback");
+  var wordRevealEl = document.getElementById("word-reveal");
 
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
@@ -574,6 +619,8 @@
 
   function startReadStep() {
     quizFeedbackEl.textContent = "";
+    wordRevealEl.innerHTML = "";
+    wordRevealEl.classList.add("hidden");
     readCharEl.textContent = practiceState.char;
 
     var pool = ALL[practiceState.script].filter(function (item) {
@@ -608,7 +655,13 @@
       var entry = getEntry(practiceState.script, practiceState.char);
       entry.quiz = true;
       saveProgress(progress);
-      setTimeout(startWriteStep, 700);
+
+      var word = getWordDisplay(practiceState.romaji, practiceState.script);
+      wordRevealEl.innerHTML = EMOJI_MAP[practiceState.romaji] + " " + buildWordHtml(word, practiceState.char);
+      wordRevealEl.classList.remove("hidden");
+      speak(word);
+
+      setTimeout(startWriteStep, 2200);
     } else {
       btnEl.classList.add("wrong");
       quizFeedbackEl.textContent = "もういちど きいて かんがえてみよう";
